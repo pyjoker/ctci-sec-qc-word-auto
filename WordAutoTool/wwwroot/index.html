@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>益鼎 QC 自動化工具</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <h1>益鼎 QC 自動化工具</h1>
+    <p>自動替換 Word 文件中的圖片與日期</p>
+  </header>
+
+  <div class="card">
+    <!-- Step 1: Word file -->
+    <div class="step">
+      <div class="step-label">
+        <span class="step-num">1</span>
+        選擇 Word 檔案（.doc / .docx）
+      </div>
+      <div class="file-input-wrapper">
+        <button class="btn-file" onclick="pickWordFile()">選擇檔案</button>
+        <span class="file-name" id="wordName">尚未選擇</span>
+      </div>
+    </div>
+
+    <!-- Document Inspector -->
+    <div class="inspect-panel" id="inspectPanel" style="display:none">
+      <div class="inspect-header">
+        <span class="inspect-icon">🔍</span>
+        <span>文件內容掃描</span>
+        <span class="inspect-spinner" id="inspectSpinner"></span>
+      </div>
+      <div id="inspectBody"></div>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- Step 2: Image folder -->
+    <div class="step">
+      <div class="step-label">
+        <span class="step-num">2</span>
+        選擇新圖片資料夾
+      </div>
+      <div class="file-input-wrapper">
+        <button class="btn-file" onclick="pickImageFolder()">選擇資料夾</button>
+        <span class="file-name" id="imgName">尚未選擇</span>
+      </div>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- Step 3: Date -->
+    <div class="step">
+      <div class="step-label">
+        <span class="step-num">3</span>
+        選擇日期
+      </div>
+      <div class="date-row">
+        <input type="date" id="dateInput" />
+        <span class="roc-preview" id="rocPreview">—</span>
+      </div>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- Submit -->
+    <button class="btn-process" id="processBtn" onclick="processDoc()">開始處理</button>
+
+    <!-- Loading -->
+    <div id="status">
+      <div class="progress-wrap">
+        <div class="progress-bar" id="progressBar"></div>
+      </div>
+      <span class="progress-label" id="progressLabel">準備上傳…</span>
+      <div class="spinner" id="spinner" style="display:none"></div>
+    </div>
+
+    <!-- Success -->
+    <div class="success-msg" id="successMsg">
+      <span class="success-icon">✅</span>
+      <span class="success-title">處理完成！</span>
+      <span class="success-sub" id="successSub"></span>
+      <a class="btn-download" id="downloadLink" download>輸出處理後的檔案</a>
+      <ul class="process-log" id="processLog"></ul>
+    </div>
+
+    <!-- Error -->
+    <div class="error-msg" id="errorMsg"></div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
