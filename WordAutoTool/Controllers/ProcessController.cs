@@ -20,7 +20,8 @@ public class ProcessController : ControllerBase
     public async Task<IActionResult> Process(
         [FromForm] IFormFile wordFile,
         [FromForm] IFormFileCollection images,
-        [FromForm] string date)
+        [FromForm] string date,
+        [FromForm] string? padZero)
     {
         if (wordFile == null || wordFile.Length == 0)
             return BadRequest(new { error = "請選擇 Word 檔案" });
@@ -31,9 +32,12 @@ public class ProcessController : ControllerBase
         if (!DateOnly.TryParse(date, out var parsedDate))
             return BadRequest(new { error = "日期格式無效" });
 
+        bool pad = padZero == "true";
         int rocYear = parsedDate.Year - 1911;
-        // Word 內文日期：個位數月/日不補零（例：115.3.5）
-        string rocDate = $"{rocYear}.{parsedDate.Month}.{parsedDate.Day}";
+        // Word 內文日期：依選項決定是否補零（例：115.3.5 或 115.03.05）
+        string rocDate = pad
+            ? $"{rocYear}.{parsedDate.Month:D2}.{parsedDate.Day:D2}"
+            : $"{rocYear}.{parsedDate.Month}.{parsedDate.Day}";
         // 檔名用月日各兩位（例：0329）
         string fileMonthDay = $"{parsedDate.Month:D2}{parsedDate.Day:D2}";
 

@@ -56,11 +56,19 @@ document.getElementById('dateInput').addEventListener('change', function () {
   resetResult();
 });
 
+document.getElementById('padZeroCheck').addEventListener('change', function () {
+  const dateVal = document.getElementById('dateInput').value;
+  document.getElementById('rocPreview').textContent = toRoc(dateVal);
+});
+
 function toRoc(isoDate) {
   if (!isoDate) return '—';
   const [y, m, d] = isoDate.split('-');
   const roc = parseInt(y, 10) - 1911;
-  return `民國 ${roc}.${m}.${d}`;
+  const pad = document.getElementById('padZeroCheck').checked;
+  const mm = pad ? m : String(parseInt(m, 10));
+  const dd = pad ? d : String(parseInt(d, 10));
+  return `民國 ${roc}.${mm}.${dd}`;
 }
 
 // ── Set today's date as default ─────────────────────────────────────────────
@@ -100,14 +108,16 @@ function processDoc() {
   if (!wordFileHandle)  { showError('請選擇 Word 檔案'); return; }
   if (!dateInput.value) { showError('請選擇日期'); return; }
 
+  const padZero = document.getElementById('padZeroCheck').checked;
   // getFile() re-reads the current bytes (handles file-changed-on-disk case)
-  wordFileHandle.getFile().then(wordFile => _doProcess(wordFile, dateInput.value));
+  wordFileHandle.getFile().then(wordFile => _doProcess(wordFile, dateInput.value, padZero));
 }
 
-function _doProcess(wordFile, dateValue) {
+function _doProcess(wordFile, dateValue, padZero) {
   const formData = new FormData();
   formData.append('wordFile', wordFile);
   formData.append('date', dateValue);
+  formData.append('padZero', padZero ? 'true' : 'false');
 
   pickedImageFiles.forEach(f => formData.append('images', f));
 
