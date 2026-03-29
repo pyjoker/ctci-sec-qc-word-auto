@@ -12,7 +12,7 @@ public class MainForm : Form
     {
         _port = port;
 
-        Text = "益鼎 QC 自動化工具";
+        Text = "QC 自動化工具";
         Width = 900;
         Height = 680;
         MinimumSize = new Size(720, 540);
@@ -32,7 +32,7 @@ public class MainForm : Form
 
     private async Task InitWebViewAsync()
     {
-        var env = await CoreWebView2Environment.CreateAsync(null, Path.Combine(Path.GetTempPath(), "益鼎QC_WebView2Cache"));
+        var env = await CoreWebView2Environment.CreateAsync(null, Path.Combine(Path.GetTempPath(), "QC_WebView2Cache"));
         await _webView.EnsureCoreWebView2Async(env);
 
         // Disable right-click context menu and dev tools shortcut for production feel
