@@ -3,7 +3,7 @@
 自動替換 Word 文件中的內嵌圖片與日期，並支援匯出 PDF，適用於Word文件的批次更新作業。
 
 手動 v.s 自動 
-![介面截圖](https://github.com/user-attachments/assets/83a709cb-beb0-4097-8ca3-7411755edbdb)
+![Image](https://github.com/user-attachments/assets/0d885120-35fe-491f-acce-f5df269a13fa)
 
 demo:在僅需替換 6 張圖片的輕度作業中，處理時間由 78s 縮減至 23s，節省約 70.5% 的操作耗時。
 
