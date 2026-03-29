@@ -1,6 +1,6 @@
 # QC 自動化工具
 
-自動替換 Word 文件中的內嵌圖片與日期，並支援匯出 PDF，適用於查驗照片報告的批次更新作業。
+自動替換 Word 文件中的內嵌圖片與日期，並支援匯出 PDF，適用於Word文件的批次更新作業。
 
 手動 v.s 自動 
 ![介面截圖](https://github.com/user-attachments/assets/83a709cb-beb0-4097-8ca3-7411755edbdb)
