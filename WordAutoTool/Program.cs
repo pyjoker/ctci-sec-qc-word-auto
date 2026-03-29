@@ -1,5 +1,7 @@
 using System.Net;
 using System.Net.Sockets;
+using System.Reflection;
+using Microsoft.Extensions.FileProviders;
 using WordAutoTool;
 using WordAutoTool.Services;
 
@@ -28,9 +30,23 @@ class Program
         builder.Logging.SetMinimumLevel(LogLevel.Warning);
 
         var app = builder.Build();
-        app.UseStaticFiles();
+
+        // Serve wwwroot files from embedded resources (works in single-file exe)
+        var embeddedProvider = new EmbeddedFileProvider(
+            Assembly.GetExecutingAssembly(),
+            "WordAutoTool.wwwroot");
+        app.UseStaticFiles(new StaticFileOptions { FileProvider = embeddedProvider });
+
         app.MapControllers();
-        app.MapFallbackToFile("index.html");
+
+        // Fallback: serve index.html from embedded resources
+        app.MapFallback(async ctx =>
+        {
+            var file = embeddedProvider.GetFileInfo("index.html");
+            ctx.Response.ContentType = "text/html; charset=utf-8";
+            await using var stream = file.CreateReadStream();
+            await stream.CopyToAsync(ctx.Response.Body);
+        });
 
         // Signal when Kestrel is ready
         app.Lifetime.ApplicationStarted.Register(() => serverReady.Set());
