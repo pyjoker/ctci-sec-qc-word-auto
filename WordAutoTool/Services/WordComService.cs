@@ -12,6 +12,7 @@ public static class WordComService
     // Word enum constants (avoids needing the interop assembly)
     private const int WdFormatDocument    = 0;   // wdFormatDocument (.doc 97-2003)
     private const int WdFormatXMLDocument = 12;  // wdFormatXMLDocument (.docx)
+    private const int WdFormatPDF         = 17;  // wdFormatPDF
     private const int WdAlertsNone        = 0;   // wdAlertsNone
     private const int WdDoNotSaveChanges  = 0;   // wdDoNotSaveChanges
 
@@ -75,6 +76,31 @@ public static class WordComService
             return File.ReadAllBytes(tempDocx);
         }
         finally { TryDelete(tempDoc); TryDelete(tempDocx); }
+    }
+
+    // ── .doc → .pdf conversion ────────────────────────────────────────────────
+
+    public static byte[] ConvertDocToPdf(byte[] docBytes)
+    {
+        var tempDoc = TempFile(".doc");
+        var tempPdf = TempFile(".pdf");
+        try
+        {
+            File.WriteAllBytes(tempDoc, docBytes);
+            WithWord(word =>
+            {
+                dynamic doc = word.Documents.Open(
+                    tempDoc,   // FileName
+                    false,     // ConfirmConversions
+                    true,      // ReadOnly
+                    false);    // AddToRecentFiles
+                doc.SaveAs2(tempPdf, WdFormatPDF);
+                doc.Close(WdDoNotSaveChanges);
+                Marshal.ReleaseComObject(doc);
+            });
+            return File.ReadAllBytes(tempPdf);
+        }
+        finally { TryDelete(tempDoc); TryDelete(tempPdf); }
     }
 
     // ── Image replacement ─────────────────────────────────────────────────────

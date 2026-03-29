@@ -108,16 +108,18 @@ function processDoc() {
   if (!wordFileHandle)  { showError('請選擇 Word 檔案'); return; }
   if (!dateInput.value) { showError('請選擇日期'); return; }
 
-  const padZero = document.getElementById('padZeroCheck').checked;
+  const padZero    = document.getElementById('padZeroCheck').checked;
+  const includePdf = document.getElementById('includePdfCheck').checked;
   // getFile() re-reads the current bytes (handles file-changed-on-disk case)
-  wordFileHandle.getFile().then(wordFile => _doProcess(wordFile, dateInput.value, padZero));
+  wordFileHandle.getFile().then(wordFile => _doProcess(wordFile, dateInput.value, padZero, includePdf));
 }
 
-function _doProcess(wordFile, dateValue, padZero) {
+function _doProcess(wordFile, dateValue, padZero, includePdf) {
   const formData = new FormData();
   formData.append('wordFile', wordFile);
   formData.append('date', dateValue);
   formData.append('padZero', padZero ? 'true' : 'false');
+  formData.append('includePdf', includePdf ? 'true' : 'false');
 
   pickedImageFiles.forEach(f => formData.append('images', f));
 
@@ -162,7 +164,8 @@ function _doProcess(wordFile, dateValue, padZero) {
     }
 
     // Build download from blob
-    const blob = new Blob([xhr.response], { type: 'application/msword' });
+    const contentType = xhr.getResponseHeader('Content-Type') || 'application/octet-stream';
+    const blob = new Blob([xhr.response], { type: contentType });
     const url = URL.createObjectURL(blob);
 
     const disposition = xhr.getResponseHeader('Content-Disposition') || '';

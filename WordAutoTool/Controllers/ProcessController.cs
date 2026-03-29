@@ -1,3 +1,4 @@
+using System.IO.Compression;
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using WordAutoTool.Services;
@@ -21,7 +22,8 @@ public class ProcessController : ControllerBase
         [FromForm] IFormFile wordFile,
         [FromForm] IFormFileCollection images,
         [FromForm] string date,
-        [FromForm] string? padZero)
+        [FromForm] string? padZero,
+        [FromForm] string? includePdf)
     {
         if (wordFile == null || wordFile.Length == 0)
             return BadRequest(new { error = "請選擇 Word 檔案" });
@@ -125,10 +127,44 @@ public class ProcessController : ControllerBase
         // Attach log as response header (URI-encoded JSON array)
         Response.Headers.Append("X-Process-Log", Uri.EscapeDataString(JsonSerializer.Serialize(log)));
 
-        // RFC 5987 encoding: non-ASCII characters percent-encoded as UTF-8
-        string fileName = $"8_查驗照片{fileMonthDay}.doc";
-        Response.Headers["Content-Disposition"] =
-            $"attachment; filename*=UTF-8''{Uri.EscapeDataString(fileName)}";
-        return File(resultBytes, "application/msword");
+        string baseName = $"8_查驗照片{fileMonthDay}";
+
+        if (includePdf == "true")
+        {
+            // Convert .doc → PDF, then zip both
+            byte[] pdfBytes;
+            try
+            {
+                pdfBytes = WordComService.ConvertDocToPdf(resultBytes);
+                log.Add("✅ 已轉換為 PDF 格式");
+            }
+            catch (Exception ex)
+            { return StatusCode(500, new { error = $"PDF 轉換失敗：{ex.Message}" }); }
+
+            // Re-write log header now that PDF entry is appended
+            Response.Headers["X-Process-Log"] = Uri.EscapeDataString(JsonSerializer.Serialize(log));
+
+            using var zipMs = new MemoryStream();
+            using (var archive = new ZipArchive(zipMs, ZipArchiveMode.Create, leaveOpen: true))
+            {
+                var docEntry = archive.CreateEntry($"{baseName}.doc", CompressionLevel.Fastest);
+                using (var s = docEntry.Open()) s.Write(resultBytes);
+
+                var pdfEntry = archive.CreateEntry($"{baseName}.pdf", CompressionLevel.Fastest);
+                using (var s = pdfEntry.Open()) s.Write(pdfBytes);
+            }
+
+            string zipName = $"{baseName}.zip";
+            Response.Headers["Content-Disposition"] =
+                $"attachment; filename*=UTF-8''{Uri.EscapeDataString(zipName)}";
+            return File(zipMs.ToArray(), "application/zip");
+        }
+        else
+        {
+            string fileName = $"{baseName}.doc";
+            Response.Headers["Content-Disposition"] =
+                $"attachment; filename*=UTF-8''{Uri.EscapeDataString(fileName)}";
+            return File(resultBytes, "application/msword");
+        }
     }
 }
