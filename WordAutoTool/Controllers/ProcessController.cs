@@ -1,3 +1,4 @@
+using System.Drawing;
 using System.IO.Compression;
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
@@ -14,6 +15,18 @@ public class ProcessController : ControllerBase
     public ProcessController(WordProcessingService wordService)
     {
         _wordService = wordService;
+    }
+
+    private static byte[] EnsureLandscape(byte[] data)
+    {
+        using var ms = new MemoryStream(data);
+        using var img = Image.FromStream(ms);
+        if (img.Height <= img.Width) return data;
+        using var bmp = new Bitmap(img);
+        bmp.RotateFlip(RotateFlipType.Rotate90FlipNone);
+        using var outMs = new MemoryStream();
+        bmp.Save(outMs, img.RawFormat);
+        return outMs.ToArray();
     }
 
     [HttpPost]
@@ -86,6 +99,13 @@ public class ProcessController : ControllerBase
             using var imgMs = new MemoryStream();
             await img.CopyToAsync(imgMs);
             imageList.Add((img.FileName, imgMs.ToArray(), img.ContentType));
+        }
+
+        // Rotate portrait images to landscape before replacement
+        for (int i = 0; i < imageList.Count; i++)
+        {
+            var (name, data, ct) = imageList[i];
+            imageList[i] = (name, EnsureLandscape(data), ct);
         }
 
         if (imageList.Count > 0)

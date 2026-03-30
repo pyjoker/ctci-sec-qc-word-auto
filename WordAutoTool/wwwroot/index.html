@@ -37,24 +37,10 @@
 
     <hr class="divider" />
 
-    <!-- Step 2: Image folder -->
+    <!-- Step 2: Date -->
     <div class="step">
       <div class="step-label">
         <span class="step-num">2</span>
-        選擇新圖片資料夾
-      </div>
-      <div class="file-input-wrapper">
-        <button class="btn-file" onclick="pickImageFolder()">選擇資料夾</button>
-        <span class="file-name" id="imgName">尚未選擇</span>
-      </div>
-    </div>
-
-    <hr class="divider" />
-
-    <!-- Step 3: Date -->
-    <div class="step">
-      <div class="step-label">
-        <span class="step-num">3</span>
         選擇日期
       </div>
       <div class="date-row">
@@ -71,6 +57,20 @@
 
     <hr class="divider" />
 
+    <!-- Step 3: Image folder -->
+    <div class="step">
+      <div class="step-label">
+        <span class="step-num">3</span>
+        選擇新圖片資料夾
+      </div>
+      <div class="file-input-wrapper">
+        <button class="btn-file" onclick="pickImageFolder()">選擇資料夾</button>
+        <span class="file-name" id="imgName">尚未選擇</span>
+      </div>
+    </div>
+
+    <hr class="divider" />
+
     <!-- Step 4: Output options -->
     <div class="step">
       <div class="step-label">
@@ -79,7 +79,7 @@
       </div>
       <div class="output-options">
         <label>
-          <input type="checkbox" id="includePdfCheck" checked />
+          <input type="checkbox" id="includePdfCheck" />
           同時輸出 PDF（將 .doc 與 .pdf 打包成 .zip）
         </label>
       </div>
