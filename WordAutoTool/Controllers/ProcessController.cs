@@ -36,7 +36,8 @@ public class ProcessController : ControllerBase
         [FromForm] IFormFileCollection images,
         [FromForm] string date,
         [FromForm] string? padZero,
-        [FromForm] string? includePdf)
+        [FromForm] string? includePdf,
+        [FromForm] string? overwrite)
     {
         if (wordFile == null || wordFile.Length == 0)
             return BadRequest(new { error = "請選擇 Word 檔案" });
@@ -146,6 +147,15 @@ public class ProcessController : ControllerBase
 
         // Attach log as response header (URI-encoded JSON array)
         Response.Headers.Append("X-Process-Log", Uri.EscapeDataString(JsonSerializer.Serialize(log)));
+
+        // Overwrite mode: return .doc with the original filename (no rename, no PDF)
+        if (overwrite == "true")
+        {
+            string origName = Path.GetFileNameWithoutExtension(wordFile.FileName) + ".doc";
+            Response.Headers["Content-Disposition"] =
+                $"attachment; filename*=UTF-8''{Uri.EscapeDataString(origName)}";
+            return File(resultBytes, "application/msword");
+        }
 
         string baseName = $"8_查驗照片{fileMonthDay}";
 

@@ -71,6 +71,21 @@ function toRoc(isoDate) {
   return `民國 ${roc}.${mm}.${dd}`;
 }
 
+// ── Overwrite toggle: disable PDF option when overwrite is checked ───────────
+
+document.getElementById('overwriteCheck').addEventListener('change', function () {
+  const pdfLabel = document.getElementById('includePdfLabel');
+  const pdfCheck = document.getElementById('includePdfCheck');
+  if (this.checked) {
+    pdfCheck.checked = false;
+    pdfLabel.style.opacity = '0.4';
+    pdfLabel.style.pointerEvents = 'none';
+  } else {
+    pdfLabel.style.opacity = '';
+    pdfLabel.style.pointerEvents = '';
+  }
+});
+
 // ── Set today's date as default ─────────────────────────────────────────────
 
 (function () {
@@ -87,6 +102,7 @@ function resetResult() {
   setVisible('successMsg', false);
   setVisible('errorMsg', false);
   setVisible('status', false);
+  document.getElementById('downloadLink').style.display = '';
 }
 
 function setVisible(id, visible) {
@@ -110,16 +126,18 @@ function processDoc() {
 
   const padZero    = document.getElementById('padZeroCheck').checked;
   const includePdf = document.getElementById('includePdfCheck').checked;
+  const overwrite  = document.getElementById('overwriteCheck').checked;
   // getFile() re-reads the current bytes (handles file-changed-on-disk case)
-  wordFileHandle.getFile().then(wordFile => _doProcess(wordFile, dateInput.value, padZero, includePdf));
+  wordFileHandle.getFile().then(wordFile => _doProcess(wordFile, dateInput.value, padZero, includePdf, overwrite));
 }
 
-function _doProcess(wordFile, dateValue, padZero, includePdf) {
+function _doProcess(wordFile, dateValue, padZero, includePdf, overwrite) {
   const formData = new FormData();
   formData.append('wordFile', wordFile);
   formData.append('date', dateValue);
   formData.append('padZero', padZero ? 'true' : 'false');
   formData.append('includePdf', includePdf ? 'true' : 'false');
+  formData.append('overwrite', overwrite ? 'true' : 'false');
 
   pickedImageFiles.forEach(f => formData.append('images', f));
 
@@ -146,7 +164,7 @@ function _doProcess(wordFile, dateValue, padZero, includePdf) {
   });
 
   // ── Response received
-  xhr.addEventListener('load', () => {
+  xhr.addEventListener('load', async () => {
     document.getElementById('spinner').style.display = 'none';
     setVisible('status', false);
     document.getElementById('processBtn').disabled = false;
@@ -163,20 +181,9 @@ function _doProcess(wordFile, dateValue, padZero, includePdf) {
       return;
     }
 
-    // Build download from blob
+    // Build blob from response
     const contentType = xhr.getResponseHeader('Content-Type') || 'application/octet-stream';
     const blob = new Blob([xhr.response], { type: contentType });
-    const url = URL.createObjectURL(blob);
-
-    const disposition = xhr.getResponseHeader('Content-Disposition') || '';
-    const nameMatch = disposition.match(/filename\*?=(?:UTF-8'')?["']?([^"';\n]+)/i);
-    const filename = nameMatch ? decodeURIComponent(nameMatch[1]) : 'output.doc';
-
-    const link = document.getElementById('downloadLink');
-    link.href = url;
-    link.download = filename;
-
-    document.getElementById('successSub').textContent = `檔案名稱：${filename}`;
 
     // Show process log
     const logEl = document.getElementById('processLog');
@@ -193,6 +200,31 @@ function _doProcess(wordFile, dateValue, padZero, includePdf) {
         });
       }
     } catch {}
+
+    const link = document.getElementById('downloadLink');
+
+    if (overwrite) {
+      // Write bytes back to the original file via File System Access API
+      try {
+        const writable = await wordFileHandle.createWritable();
+        await writable.write(blob);
+        await writable.close();
+      } catch (e) {
+        showError('寫入原檔案失敗：' + e.message);
+        return;
+      }
+      link.style.display = 'none';
+      document.getElementById('successSub').textContent = `已覆蓋原檔案：${wordFile.name}`;
+    } else {
+      const url = URL.createObjectURL(blob);
+      const disposition = xhr.getResponseHeader('Content-Disposition') || '';
+      const nameMatch = disposition.match(/filename\*?=(?:UTF-8'')?["']?([^"';\n]+)/i);
+      const filename = nameMatch ? decodeURIComponent(nameMatch[1]) : 'output.doc';
+      link.href = url;
+      link.download = filename;
+      link.style.display = '';
+      document.getElementById('successSub').textContent = `檔案名稱：${filename}`;
+    }
 
     setVisible('successMsg', true);
   });
