@@ -118,7 +118,7 @@ function setProgress(pct, label) {
 
 // ── Process ─────────────────────────────────────────────────────────────────
 
-function processDoc() {
+async function processDoc() {
   const dateInput = document.getElementById('dateInput');
 
   if (!wordFileHandle)  { showError('請選擇 Word 檔案'); return; }
@@ -127,8 +127,16 @@ function processDoc() {
   const padZero    = document.getElementById('padZeroCheck').checked;
   const includePdf = document.getElementById('includePdfCheck').checked;
   const overwrite  = document.getElementById('overwriteCheck').checked;
+
+  // Request write permission while still inside the user-gesture context (button click)
+  if (overwrite) {
+    const perm = await wordFileHandle.requestPermission({ mode: 'readwrite' });
+    if (perm !== 'granted') { showError('未取得原檔案的寫入權限'); return; }
+  }
+
   // getFile() re-reads the current bytes (handles file-changed-on-disk case)
-  wordFileHandle.getFile().then(wordFile => _doProcess(wordFile, dateInput.value, padZero, includePdf, overwrite));
+  const wordFile = await wordFileHandle.getFile();
+  _doProcess(wordFile, dateInput.value, padZero, includePdf, overwrite);
 }
 
 function _doProcess(wordFile, dateValue, padZero, includePdf, overwrite) {
