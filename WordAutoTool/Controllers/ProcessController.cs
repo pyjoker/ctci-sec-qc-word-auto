@@ -95,7 +95,7 @@ public class ProcessController : ControllerBase
         var imageList = new List<(string Name, byte[] Data, string ContentType)>();
         foreach (var img in images
             .Where(f => f.Length > 0)
-            .OrderBy(f => f.FileName, StringComparer.OrdinalIgnoreCase))
+            .OrderBy(f => System.Text.RegularExpressions.Regex.Replace(f.FileName, @"\d+", m => m.Value.PadLeft(20, '0')), StringComparer.OrdinalIgnoreCase))
         {
             using var imgMs = new MemoryStream();
             await img.CopyToAsync(imgMs);
